@@ -5,6 +5,7 @@ set -euo pipefail
 
 PLASTICITY_TITLE="${PLASTICITY_TITLE:-Untitled - Plasticity}"
 
+
 # Origin where you start geometry (screen coords)
 ORIGIN_X="${ORIGIN_X:-960}"
 ORIGIN_Y="${ORIGIN_Y:-544}"
@@ -20,7 +21,6 @@ OFFSET_UI_Y="${OFFSET_UI_Y:-$MOVE_UI_Y}"
 
 # Tools
 LINE_TOOL_KEY="Shift+a"   # line tool
-ARC_TOOL_KEY="Shift+x"    # center-point arc tool
 MIRROR_TOOL_KEY="Alt+x"
 CORNER_RECTANGLE_KEY="Shift+r"
 CIRCLE_KEY="Shift+c"
@@ -30,9 +30,27 @@ NUDGE=15
 
 # Delays
 DELAY_TINY=0.05
-DELAY_SMALL=0.08
+DELAY_SMALL=0.10
 
 ####################################################################
+
+press_return() {
+  local label="${1:-}"
+  if [ -n "$label" ]; then
+    echo "DEBUG RETURN: $label (caller=${FUNCNAME[1]})" >&2
+  else
+    echo "DEBUG RETURN: caller=${FUNCNAME[1]}" >&2
+  fi
+  xdotool key Return
+  sleep "$DELAY_TINY"
+}
+
+debug_bytes() {
+  local label="$1"
+  local val="$2"
+  printf 'DEBUG %s: ' "$label" >&2
+  printf '%q\n' "$val" >&2
+}
 
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "Missing: $1" >&2; exit 1; }
@@ -73,7 +91,7 @@ mirror_selection_two_axes() {
   sleep 0.07
   xdotool mouseup 1
   sleep "$DELAY_TINY"
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 
   xdotool key a
@@ -91,7 +109,7 @@ mirror_selection_two_axes() {
   sleep 0.07
   xdotool mouseup 1
   sleep "$DELAY_TINY"
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 
 }
@@ -126,9 +144,9 @@ move_selection_to_xy() {
   xdotool type --delay 15 "$y"
   sleep "$DELAY_TINY"
 
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 }
 
@@ -170,7 +188,9 @@ draw_line() {
   sleep "$DELAY_TINY"
 
   xdotool type --delay 15 "$length"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+
+  press_return
   sleep "$DELAY_TINY"
 
   move_selection_to_xy "$target_x" "$target_y"
@@ -204,7 +224,13 @@ draw_center_arc() {
       ;;
   esac
 
-  xdotool key --clearmodifiers "$ARC_TOOL_KEY"
+  xdotool key f
+  sleep "$DELAY_TINY"
+  xdotool type --delay 15 "center point arc"
+  sleep "$DELAY_SMALL"
+  xdotool key Down 
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_SMALL"
 
   xdotool mousemove "$cx" "$cy"
@@ -227,7 +253,8 @@ draw_center_arc() {
   xdotool key Tab
   sleep "$DELAY_TINY"
   xdotool type --delay 15 "$radius"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_TINY"
 
   local vy
@@ -259,6 +286,7 @@ build_rhs() {
   local tw="$3"
   local r="$4"
 
+  
   echo "=== build_rhs h=$h b=$b tw=$tw r=$r ==="
 
   focus_plasticity_by_mouse_origin
@@ -266,7 +294,13 @@ build_rhs() {
   xdotool key Escape
   sleep "$DELAY_TINY"
 
-  xdotool key --clearmodifiers "$CORNER_RECTANGLE_KEY"
+  xdotool key f
+  sleep "$DELAY_TINY"
+  xdotool type --delay 15 "center re"
+  sleep $DELAY_SMALL
+  xdotool key Down 
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_SMALL"
 
   xdotool mousemove "$ORIGIN_X" "$ORIGIN_Y"
@@ -286,11 +320,12 @@ build_rhs() {
   xdotool key Tab
   sleep "$DELAY_TINY"
   xdotool type --delay 15 "$b"
-
+  sleep "$DELAY_TINY"
   xdotool key Tab
   sleep "$DELAY_TINY"
   xdotool type --delay 15 "$h"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_TINY"
 
   xdotool key b
@@ -306,7 +341,8 @@ build_rhs() {
   sleep "$DELAY_TINY"
 
   xdotool type --delay 15 "$r"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_TINY"
 
   xdotool key o
@@ -323,10 +359,11 @@ build_rhs() {
 
   xdotool type --delay 15 "-"
   xdotool type --delay 15 "$tw"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_TINY"
 
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 }
 
@@ -361,7 +398,7 @@ build_chs() {
   xdotool type --delay 15 "$d"
   sleep "$DELAY_TINY"
 
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 
   xdotool key o
@@ -378,10 +415,11 @@ build_chs() {
 
   xdotool type --delay 15 "-"
   xdotool type --delay 15 "$tw"
-  xdotool key Return
+  sleep "$DELAY_TINY"
+  press_return
   sleep "$DELAY_TINY"
 
-  xdotool key Return
+  press_return
   sleep "$DELAY_TINY"
 }
 
@@ -393,6 +431,10 @@ build_hea() {
   local tw="$3"
   local tf="$4"
   local r="$5"
+  debug_bytes "h" "$h"
+  debug_bytes "b" "$b"
+  debug_bytes "tw" "$tw"
+  debug_bytes "r" "$r"
 
   echo "=== build_hea h=$h b=$b tw=$tw tf=$tf r=$r ==="
 

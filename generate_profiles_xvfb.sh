@@ -201,17 +201,11 @@ normalize_viewport() {
   sleep "$DELAY_SMALL"
   send_keys Delete
   sleep "$DELAY_SMALL"
+  send_keys  KP_1
+  sleep "$DELAY_SMALL"
   send_keys ctrl+b
   sleep "$DELAY_SMALL"
   send_keys ctrl+shift+b
-  sleep "$DELAY_SMALL"
-  send_keys KP_1
-  sleep "$DELAY_SMALL"
-  send_keys slash
-  sleep "$DELAY_SMALL"
-
-  read CX CY < <(get_window_center)
-  scroll_at_origin "$CX" "$CY" down 20
   sleep "$DELAY_SMALL"
 }
 
@@ -246,10 +240,13 @@ draw_center_circle() {
   send_keys Tab
   sleep "$DELAY_TINY"
 
-  send_text "50"
+  send_text "500 mm"
   sleep "$DELAY_TINY"
 
   send_keys Return
+  sleep "$DELAY_SMALL"
+
+  send_keys slash
   sleep "$DELAY_SMALL"
 }
 
@@ -307,6 +304,11 @@ calibrate_move_and_offset() {
 
   send_keys g
   sleep "$DELAY_SMALL"
+
+  prompt_msg "Move the cursor to origin."
+
+  read ORIGIN_X ORIGIN_Y < <(capture_position)
+  echo "Captured origin at: $ORIGIN_X,$ORIGIN_Y"
 
   prompt_msg "Move the cursor to the X-coordinate input (leftmost field in the MOVE dialog)."
 
@@ -472,9 +474,9 @@ calibration_main() {
   calibrate_move_and_offset
 
   send_keys a
-  sleep "$DELAY_SMALL"
+  sleep 0.1
   send_keys Delete
-  sleep "$DELAY_SMALL"
+  sleep 0.1
 
   echo
   echo "Calibration complete (session-only; not saved to disk)."

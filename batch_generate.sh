@@ -8,8 +8,8 @@ GEO_SCRIPT="./geo.sh"
 
 # Plasticity / xdotool assumptions (used for focusing window)
 PLASTICITY_TITLE="Untitled - Plasticity"
-ORIGIN_X="${ORIGIN_X:-960}"
-ORIGIN_Y="${ORIGIN_Y:-540}"
+ORIGIN_X="${ORIGIN_X:-100}"
+ORIGIN_Y="${ORIGIN_Y:-100}"
 
 DELAY_TINY=0.05
 DELAY_SMALL=0.10
@@ -31,6 +31,12 @@ if [ ! -x "$GEO_SCRIPT" ]; then
   exit 1
 fi
 
+clean_dim() {
+  local v="$1"
+  v=${v//$'\r'/}
+  v=${v//$'\n'/}
+  printf '%s mm' "$v"
+}
 
 focus_plasticity() {
   xdotool mousemove --sync "$ORIGIN_X" "$ORIGIN_Y"
@@ -46,7 +52,6 @@ save_clipboard_to_file() {
     if [ -s "$outfile" ]; then
       return 0
     fi
-  else
   fi
 
   : > "$outfile"
@@ -54,7 +59,6 @@ save_clipboard_to_file() {
     if [ -s "$outfile" ]; then
       return 0
     fi
-  else
   fi
 
   echo " Warning: could not read Plasticity clipboard into $outfile" >&2
@@ -81,6 +85,9 @@ copy_current_profile_to_file() {
 
   xdotool key Delete
   sleep "$DELAY_SMALL"
+  
+  xdotool key Escape
+  sleep "$DELAY_TINY"
 }
 
 ####################################################################
@@ -113,7 +120,6 @@ update_progress() {
     local pct=0
     if [ "${progress_total:-0}" -gt 0 ]; then
       pct=$((progress_current * 100 / progress_total))
-    else
     fi
 
     local now
@@ -121,7 +127,6 @@ update_progress() {
     local elapsed=$((now - progress_start_time))
 
     printf "[%3d%%] %-40s (elapsed: %ds)\n" "$pct" "$msg" "$elapsed"
-  } || {
   }
 }
 
@@ -208,11 +213,11 @@ process_json_file() {
     case "$family" in
       hea)
         local h b tw tf r
-        h=$(jq -r '.h'  <<<"$row")
-        b=$(jq -r '.b'  <<<"$row")
-        tw=$(jq -r '.tw' <<<"$row")
-        tf=$(jq -r '.tf' <<<"$row")
-        r=$(jq -r '.r'  <<<"$row")
+        h=$(clean_dim "$(jq -r '.h' <<<"$row")")
+        b=$(clean_dim "$(jq -r '.b' <<<"$row")")
+        tw=$(clean_dim "$(jq -r '.tw' <<<"$row")")
+        tf=$(clean_dim "$(jq -r '.tf' <<<"$row")")
+        r=$(clean_dim "$(jq -r '.r' <<<"$row")")
 
         echo "  h=$h  b=$b  tw=$tw  tf=$tf  r=$r"
 
@@ -227,9 +232,8 @@ process_json_file() {
         ;;
       chs)
         local D tw
-        D=$(jq -r '.D'  <<<"$row")
-        tw=$(jq -r '.tw' <<<"$row")
-
+        D=$(clean_dim "$(jq -r '.D' <<<"$row")")
+        tw=$(clean_dim "$(jq -r '.tw' <<<"$row")")
         echo "  D=$D  tw=$tw"
 
         if [ "$DRY_RUN" -eq 0 ]; then
@@ -243,11 +247,10 @@ process_json_file() {
         ;;
       rhs)
         local h b tw r
-        h=$(jq -r '.h'  <<<"$row")
-        b=$(jq -r '.b'  <<<"$row")
-        tw=$(jq -r '.tw' <<<"$row")
-        r=$(jq -r '.r'  <<<"$row")
-
+        h=$(clean_dim "$(jq -r '.h' <<<"$row")")
+        b=$(clean_dim "$(jq -r '.b' <<<"$row")")
+        tw=$(clean_dim "$(jq -r '.tw' <<<"$row")")
+        r=$(clean_dim "$(jq -r '.r' <<<"$row")")
         echo "  h=$h  b=$b  tw=$tw  r=$r"
 
         if [ "$DRY_RUN" -eq 0 ]; then
@@ -293,10 +296,21 @@ Options:
   --dry-run    Do not call geo.sh or xdotool/xclip; just print what would happen.
 EOF
 }
+setup_viewport_once() {
+  echo "Normalizing Plasticity viewport..."
+  xdotool key ctrl+b
+  sleep "$DELAY_TINY"
+  xdotool key ctrl+shift+b
+  sleep "$DELAY_TINY"
+  xdotool key --clearmodifiers KP_1
+  sleep "$DELAY_TINY"
+  xdotool key --clearmodifiers 2
+  sleep "$DELAY_TINY"
+}
 
 main() {
   local json_files=()
-
+  
 
   while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -379,12 +393,7 @@ main() {
 
   init_progress "$progress_target"
   
-  xdotool key ctrl+b
-  sleep "$DELAY_TINY"
-  xdotool key ctrl+shift+b
-  sleep "$DELAY_TINY"
-  xdotool key --clearmodifiers KP_1
-  sleep "$DELAY_TINY"
+  setup_viewport_once
   
   for json in "${json_files[@]}"; do
     process_json_file "$json"

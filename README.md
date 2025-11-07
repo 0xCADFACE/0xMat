@@ -49,6 +49,24 @@ It streamlines the use and generation of standardized CAD profiles while remaini
 
 Clone the repository, generate profiles and run the installer:
 
+## Prerequisites for Profile Generation
+
+The profile generator tool assumes you are using the default key bindings in the application.  
+These must match the following mappings for the tool to work correctly:
+
+| Action | Default Key |
+|--------|--------------|
+| Search dialog | F |
+| Line tool | Shift + A |
+| Circle tool | Shift + C |
+| Move tool | G |
+| Mirror tool | Alt + X |
+| Viewport: Focus | / |
+| Viewport: Navigate to Front | Numpad 1 |
+
+Note: Custom key bindings are not yet supported.  
+A configuration file to define or override shortcuts will be added in a future update.
+
 ```bash
 git clone https://github.com/0xCADFACE/0xMat.git
 cd 0xMat
