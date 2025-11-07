@@ -266,7 +266,7 @@ prompt_msg() {
     zenity --info \
       --no-wrap \
       --title="Hexmat Calibration" \
-      --text="$msg\n\nThen click once on that input field in Plasticity.\nThis dialog will close automatically when you click." \
+      --text="$msg\n\nThen click once on that UI element in Plasticity.\nThis dialog will close automatically when you click." \
       >/dev/null 2>&1 &
     ZENITY_STEP_PID=$!
     sleep 0.3   # give zenity a moment to appear
@@ -327,7 +327,7 @@ calibrate_move_and_offset() {
   send_keys o
   sleep "$DELAY_SMALL"
 
-  prompt_msg "Move the cursor to the OFFSET coordinate input (the field you want to use)."
+  prompt_msg "Move the cursor to the OFFSET coordinate input."
 
   read OFFSET_X_X OFFSET_X_Y < <(capture_position)
   echo "Captured OFFSET input at: $OFFSET_X_X,$OFFSET_X_Y"
