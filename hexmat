@@ -1,0 +1,70 @@
+#!/usr/bin/sh
+PLASTICITY_MIME="application/vnd.plasticity.items"
+customized_dmenu() {
+  local INPUT="$1"
+
+  dmenu -i -l 12 \
+    -p "$INPUT" \
+    -fn "JetBrainsMono Nerd Font-16" \
+    -nb "#2b2b2b" \
+    -nf "#9333ea" \
+    -sb "#9333ea" \
+    -sf "#121212"
+}
+
+
+clip() {
+    local input=$1
+    local mime=${PLASTICITY_MIME}
+
+    if command -v xclip >/dev/null 2>&1; then
+        # X11: xclip
+        xclip -selection clipboard -t "$mime" -i < "$input"
+    elif command -v wl-copy >/dev/null 2>&1; then
+        # Wayland: wl-copy (wl-clipboard)
+        wl-copy --type "$mime" < "$input"
+    else
+        echo "Could not find xclip or wl-copy, make sure either one is installed." >&2
+        return 1
+    fi
+}
+
+SCRIPT_PATH="$(readlink -f "$0")"
+SCRIPT_DIR="$(dirname "$SCRIPT_PATH")"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hexmat_profile_library"
+
+if [ -d "$CONFIG_DIR" ]; then
+  BASE="$CONFIG_DIR"
+else
+  BASE="$SCRIPT_DIR/hexmat_profile_library"
+fi
+
+if [ ! -d "$BASE" ]; then
+  echo "Profile library not found in:"
+  echo "  $CONFIG_DIR"
+  echo "  $BASE"
+  exit 1
+fi
+
+dmenu_to_directory() {
+    local dir=$1
+
+    if ls "$dir" | grep -q "profile"; then
+        echo "$dir/profile"
+        return 0
+    fi
+
+    local choice
+    choice=$(
+        find "$dir" -mindepth 1 -maxdepth 1 -type d -printf '%f\n' \
+        | customized_dmenu
+    ) || return 1   # if dmenu fails or user cancels
+
+    # If nothing selected, bail out
+    [ -z "$choice" ] && return 1
+
+    dmenu_to_directory "$dir/$choice"
+}
+
+result=$(dmenu_to_directory "$BASE")
+clip "$result"
